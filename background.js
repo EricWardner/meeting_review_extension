@@ -44,9 +44,11 @@ async function handleCreateSurvey(request) {
   const { eventId, eventTitle } = request;
   try {
     const token = await ensureAuthenticated();
-    const surveyId = await createSurvey(token, eventTitle);
-    console.log("Survey created with ID:", surveyId);
-    return { success: true, surveyId };
+    const createdForm = await createSurvey(token, eventTitle);
+    console.log("Survey created with ID:", createdForm.formId);
+    const surveyId = createdForm.formId
+    const responderUri = createdForm.responderUri
+    return { success: true, surveyId, responderUri };
   } catch (error) {
     console.error("Error:", error);
     throw error;
@@ -89,6 +91,7 @@ async function createSurvey(token, eventTitle) {
   }
 
   const surveyContent = {
+    includeFormInResponse: true,
     requests: [
       {
         createItem: {
@@ -120,7 +123,7 @@ async function createSurvey(token, eventTitle) {
     ],
   };
 
-  await fetchWithAuth(
+  const resp = await fetchWithAuth(
     `https://forms.googleapis.com/v1/forms/${formData.formId}:batchUpdate`,
     {
       method: "POST",
@@ -129,7 +132,7 @@ async function createSurvey(token, eventTitle) {
     token
   );
 
-  return formData.formId;
+  return resp.form;
 }
 
 async function fetchWithAuth(url, options, token) {

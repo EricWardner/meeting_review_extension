@@ -1,6 +1,10 @@
 const observer = new MutationObserver((mutations) => {
   mutations.forEach((mutation) => {
-    if (mutation.type === "childList" && mutation.target.className === "ewPPR") {
+    if (
+      mutation.type === "childList" &&
+      mutation.target instanceof HTMLElement &&
+      mutation.target.className === "ewPPR"
+    ) {
       handleMutation(mutation);
     }
   });
@@ -8,17 +12,18 @@ const observer = new MutationObserver((mutations) => {
 
 observer.observe(document.body, { childList: true, subtree: true });
 
-function handleMutation(mutation) {
+function handleMutation(mutation: MutationRecord) {
   if (!document.getElementById("add-feedback-survey-btn")) {
     const eventId = extractEventIdFromURL(window.location.href);
     chrome.runtime.sendMessage({ action: "checkIfSurveyExists", eventId }, (resp) => {
+      const targetChild = mutation.target.firstChild?.nextSibling ?? null;
       if (resp.surveyId) {
         const editSurveyDiv = createEditSurveyButton(resp.surveyId);
-        mutation.target.insertBefore(editSurveyDiv, mutation.target.firstChild.nextSibling);
+        mutation.target.insertBefore(editSurveyDiv, targetChild);
         addDeleteClickListener(resp.surveyId, editSurveyDiv);
       } else {
         const addSurveyDiv = createAddSurveyButton();
-        mutation.target.insertBefore(addSurveyDiv, mutation.target.firstChild.nextSibling);
+        mutation.target.insertBefore(addSurveyDiv, targetChild);
         addClickEventListener(addSurveyDiv);
       }
     });
@@ -48,12 +53,12 @@ function createAddSurveyButton() {
   return addSurveyDiv;
 }
 
-function createEditSurveyButton(surveyId) {
+function createEditSurveyButton(surveyId: string) {
   const surveyLink = `https://docs.google.com/forms/d/${surveyId}/edit`;
-  const addSurveyDiv = document.createElement("div");
-  addSurveyDiv.classList.add("FrSOzf");
-  addSurveyDiv.id = "add-feedback-survey-btn";
-  addSurveyDiv.innerHTML = `
+  const editSurveyDiv = document.createElement("div");
+  editSurveyDiv.classList.add("FrSOzf");
+  editSurveyDiv.id = "add-feedback-survey-btn";
+  editSurveyDiv.innerHTML = `
     <div aria-hidden="true" class="tzcF6">
       <i class="google-material-icons meh4fc hggPq uSx8Od" aria-hidden="true">
         <div id="rHCnYc">  
@@ -74,34 +79,48 @@ function createEditSurveyButton(surveyId) {
     </div>
   `;
 
-  return addSurveyDiv;
+  return editSurveyDiv;
 }
 
-function addDeleteClickListener(surveyId, addSurveyDiv, responderUri) {
-  // Add event listener for the delete button
-  document.getElementById("xDeleteSurvey").addEventListener("click", (e) => {
+function addDeleteClickListener(surveyId: string, addSurveyDiv: HTMLElement) {
+  const deleteButton = document.getElementById("xDeleteSurvey");
+  if (!deleteButton) {
+    console.error("Couldn't find xDeleteSurvey in DOM");
+    return;
+  }
+  deleteButton.addEventListener("click", (e) => {
     e.stopPropagation(); // Prevent event from bubbling up
-    deleteSurvey(surveyId, addSurveyDiv, responderUri);
+    deleteSurvey(surveyId, addSurveyDiv, undefined);
   });
 }
 
-function addClickEventListener(addSurveyDiv) {
+function addClickEventListener(addSurveyDiv: HTMLElement) {
   addSurveyDiv.addEventListener("click", async () => {
-    const thisDiv = document.getElementById("xAddFeedback").parentNode.parentNode;
-    console.log(thisDiv);
+    const deleteButton = document.getElementById("xDeleteSurvey");
+    if (!deleteButton) {
+      console.error("Couldn't find xDeleteSurvey in DOM");
+      return;
+    }
+
+    const thisDiv = deleteButton.parentNode?.parentNode;
     const loadingCircle = document.createElement("div");
     loadingCircle.id = "new-form-progress";
     loadingCircle.className = "Mciu2 bFNshf";
     loadingCircle.innerHTML = loadingHtml;
-    thisDiv.appendChild(loadingCircle);
-    const eventTitle = document.querySelector('input[aria-label="Title"]').value;
+    thisDiv?.appendChild(loadingCircle);
+
+    const eventTitle = (document.querySelector('input[aria-label="Title"]') as HTMLInputElement)?.value;
     const eventId = extractEventIdFromURL(window.location.href);
+    if (!eventId) {
+      console.error("couldn't get event ID from url");
+      return;
+    }
 
     try {
-      const resp = await createSurvey(eventId, eventTitle);
+      const resp = await sendCreateSurveyMsg(eventId, eventTitle);
       if (resp?.surveyId) {
         updateButtonToLink(addSurveyDiv, resp.surveyId, resp.responderUri);
-        thisDiv.removeChild(loadingCircle);
+        thisDiv?.removeChild(loadingCircle);
         addSurveyLinkToDescription(resp.responderUri);
       } else {
         console.error("Failed to create survey or receive surveyId.");
@@ -112,8 +131,28 @@ function addClickEventListener(addSurveyDiv) {
   });
 }
 
-function addSurveyLinkToDescription(uri) {
-  const inputDiv = document.getElementById("xDescIn").querySelector(`div[aria-label="Description"]`);
+type CreateSurveyBgResp = {
+  success: boolean;
+  surveyId: string;
+  responderUri: string;
+};
+function sendCreateSurveyMsg(eventId: string, eventTitle: string) {
+  return new Promise<CreateSurveyBgResp>((resolve, reject) => {
+    chrome.runtime.sendMessage({ action: "createSurvey", eventId, eventTitle }, (resp: CreateSurveyBgResp) => {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+      } else {
+        resolve(resp);
+      }
+    });
+  });
+}
+
+function addSurveyLinkToDescription(uri: string) {
+  const inputDiv = document.getElementById("xDescIn")?.querySelector(`div[aria-label="Description"]`);
+  if (!inputDiv) {
+    return;
+  }
   inputDiv.appendChild(document.createElement("br"));
   inputDiv.appendChild(document.createTextNode("─────────"));
   inputDiv.appendChild(document.createElement("br"));
@@ -129,33 +168,35 @@ function addSurveyLinkToDescription(uri) {
   inputDiv.appendChild(document.createElement("br"));
 }
 
-function removeSurveyLinkInDescription(uri) {
-  const inputDiv = document.getElementById("xDescIn").querySelector(`div[aria-label="Description"]`);
+function removeSurveyLinkInDescription(uri: string | undefined) {
+  if (uri === undefined) {
+    return;
+  }
+  const inputDiv = document.getElementById("xDescIn")?.querySelector(`div[aria-label="Description"]`);
+  if (!inputDiv) {
+    return;
+  }
   const surveyLink = inputDiv.querySelector(`a[href="${uri}"]`);
-  inputDiv.removeChild(surveyLink.previousSibling);
-  inputDiv.removeChild(surveyLink.previousSibling);
-  inputDiv.removeChild(surveyLink.previousSibling);
-  inputDiv.removeChild(surveyLink.previousSibling);
-  inputDiv.removeChild(surveyLink.previousSibling);
-  inputDiv.removeChild(surveyLink.nextSibling);
-  inputDiv.removeChild(surveyLink.nextSibling);
-  inputDiv.removeChild(surveyLink.nextSibling);
-  inputDiv.removeChild(surveyLink);
+  if (!surveyLink) {
+    return;
+  }
+  if (
+    surveyLink.previousSibling?.previousSibling?.previousSibling?.previousSibling?.previousSibling &&
+    surveyLink.nextSibling?.nextSibling?.nextSibling
+  ) {
+    inputDiv.removeChild(surveyLink.previousSibling);
+    inputDiv.removeChild(surveyLink.previousSibling);
+    inputDiv.removeChild(surveyLink.previousSibling);
+    inputDiv.removeChild(surveyLink.previousSibling);
+    inputDiv.removeChild(surveyLink.previousSibling);
+    inputDiv.removeChild(surveyLink.nextSibling);
+    inputDiv.removeChild(surveyLink.nextSibling);
+    inputDiv.removeChild(surveyLink.nextSibling);
+    inputDiv.removeChild(surveyLink);
+  }
 }
 
-function createSurvey(eventId, eventTitle) {
-  return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage({ action: "createSurvey", eventId, eventTitle }, (resp) => {
-      if (chrome.runtime.lastError) {
-        reject(chrome.runtime.lastError);
-      } else {
-        resolve(resp);
-      }
-    });
-  });
-}
-
-function updateButtonToLink(addSurveyDiv, surveyId, responderUri) {
+function updateButtonToLink(addSurveyDiv: HTMLElement, surveyId: string, responderUri: string | undefined) {
   const surveyLink = `https://docs.google.com/forms/d/${surveyId}/edit`;
   console.log("updating button to link", surveyLink);
   addSurveyDiv.innerHTML = `
@@ -180,20 +221,25 @@ function updateButtonToLink(addSurveyDiv, surveyId, responderUri) {
   `;
 
   // Add event listener for the delete button
-  document.getElementById("xDeleteSurvey").addEventListener("click", (e) => {
+  const deleteButton = document.getElementById("xDeleteSurvey");
+  if (!deleteButton) {
+    console.error("Couldn't find xDeleteSurvey in DOM");
+    return;
+  }
+  deleteButton.addEventListener("click", (e) => {
     e.stopPropagation(); // Prevent event from bubbling up
     deleteSurvey(surveyId, addSurveyDiv, responderUri);
   });
 }
 
-function deleteSurvey(surveyId, addSurveyDiv, responderUri) {
+function deleteSurvey(surveyId: string, addSurveyDiv: HTMLElement, responderUri: string | undefined) {
   if (confirm("Are you sure you want to delete this survey?")) {
     chrome.runtime.sendMessage({ action: "deleteSurvey", surveyId }, (response) => {
       if (response.success) {
         console.log("Survey deleted successfully");
         // Reset the button to its original state
         const newAddSurveyDiv = createAddSurveyButton();
-        addSurveyDiv.parentNode.replaceChild(newAddSurveyDiv, addSurveyDiv);
+        addSurveyDiv.parentNode?.replaceChild(newAddSurveyDiv, addSurveyDiv);
         addClickEventListener(newAddSurveyDiv);
 
         removeSurveyLinkInDescription(responderUri);
@@ -205,7 +251,7 @@ function deleteSurvey(surveyId, addSurveyDiv, responderUri) {
   }
 }
 
-function extractEventIdFromURL(url) {
+function extractEventIdFromURL(url: string) {
   const match = url.match(/eventedit\/([^?&]+)/);
   return match ? match[1] : null;
 }

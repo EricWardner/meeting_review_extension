@@ -18,7 +18,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-async function handleCheckIfSurveyExists(eventId) {
+async function handleCheckIfSurveyExists(eventId: string) {
   try {
     const token = await ensureAuthenticated();
     const surveyId = await getFileFromDrive(token, eventId);
@@ -29,7 +29,7 @@ async function handleCheckIfSurveyExists(eventId) {
   }
 }
 
-async function handleDeleteSurvey(surveyId) {
+async function handleDeleteSurvey(surveyId: string) {
   try {
     const token = await ensureAuthenticated();
     await trashFormInDrive(token, surveyId);
@@ -40,7 +40,7 @@ async function handleDeleteSurvey(surveyId) {
   }
 }
 
-async function getFileFromDrive(token, fileName) {
+async function getFileFromDrive(token: string, fileName: string) {
   const response = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${fileName}' and trashed=false`, {
     method: "GET",
     headers: {
@@ -65,7 +65,7 @@ async function getFileFromDrive(token, fileName) {
   }
 }
 
-async function trashFormInDrive(token, fileId) {
+async function trashFormInDrive(token: string, fileId: string) {
   const response = await fetch(`https://www.googleapis.com/drive/v2/files/${fileId}/trash`, {
     method: "POST",
     headers: {
@@ -81,7 +81,13 @@ async function trashFormInDrive(token, fileId) {
   }
 }
 
-async function handleCreateSurvey(request) {
+type CreateSurveyBgMsq = {
+  action: string;
+  eventId: string;
+  eventTitle: string;
+};
+
+async function handleCreateSurvey(request: CreateSurveyBgMsq) {
   const { eventId, eventTitle } = request;
   try {
     const token = await ensureAuthenticated();
@@ -97,19 +103,18 @@ async function handleCreateSurvey(request) {
 }
 
 function ensureAuthenticated() {
-  return new Promise((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     chrome.identity.getAuthToken({ interactive: true }, function (token) {
       if (chrome.runtime.lastError || !token) {
-        reject(new Error(chrome.runtime.lastError?.message || "Authentication failed"));
+        reject(new Error(chrome.runtime.lastError?.message ?? "Authentication failed"));
       } else {
-        console.log(token);
         resolve(token);
       }
     });
   });
 }
 
-async function createSurvey(token, eventTitle, eventId) {
+async function createSurvey(token: string, eventTitle: string, eventId: string) {
   const surveyTitle = "Quick Meeting Feedback";
   const surveyPayload = {
     info: {
@@ -176,7 +181,7 @@ async function createSurvey(token, eventTitle, eventId) {
   return resp.form;
 }
 
-async function fetchWithAuth(url, options, token) {
+async function fetchWithAuth(url: string, options: any, token: string) {
   const response = await fetch(url, {
     ...options,
     headers: {

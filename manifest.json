@@ -19,15 +19,15 @@
     "https://*.googleapis.com/*"
   ],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "src/popup.html"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/background.ts"
   },
   "content_scripts": [
     {
       "matches": ["https://calendar.google.com/calendar/*/eventedit/*"],
-      "js": ["content.js"]
+      "js": ["src/content.ts"]
     }
   ]
 }

@@ -41,7 +41,7 @@ async function handleDeleteSurvey(surveyId) {
 }
 
 async function getFileFromDrive(token, fileName) {
-  const response = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${fileName}'`, {
+  const response = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${fileName}' and trashed=false`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,

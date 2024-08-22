@@ -44,7 +44,7 @@ async function handleCreateSurvey(request) {
   const { eventId, eventTitle } = request;
   try {
     const token = await ensureAuthenticated();
-    const createdForm = await createSurvey(token, eventTitle);
+    const createdForm = await createSurvey(token, eventTitle, eventId);
     console.log("Survey created with ID:", createdForm.formId);
     const surveyId = createdForm.formId
     const responderUri = createdForm.responderUri
@@ -68,12 +68,12 @@ function ensureAuthenticated() {
   });
 }
 
-async function createSurvey(token, eventTitle) {
+async function createSurvey(token, eventTitle, eventId) {
   const surveyTitle = "Quick Meeting Feedback";
   const surveyPayload = {
     info: {
       title: surveyTitle,
-      documentTitle: surveyTitle,
+      documentTitle: eventId,
     },
   };
 

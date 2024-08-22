@@ -31,7 +31,7 @@ function createAddSurveyButton() {
     <div class="j3nyw">
       <div class="d27AIf z5I5rf v9VzKf">
         <div class="uArJ5e UQuaGc Y5sE8d y4cid dvv0Pc M9Bg4d" role="button" tabindex="0" id="xAddFeedback">
-          <span class="l4V7wb Fxmcue"><span class="NPEfkd RveJvd snByac">Add Feedback Survey</span></span>
+          <span class="l4V7wb Fxmcue"><span class="NPEfkd RveJvd snByac">Add Meeting Feedback Survey</span></span>
         </div>
       </div>
     </div>
@@ -89,7 +89,6 @@ function removeSurveyLinkInDescription(uri) {
   inputDiv.removeChild(surveyLink.nextSibling);
   inputDiv.removeChild(surveyLink);
 }
-
 
 function createSurvey(eventId, eventTitle) {
   return new Promise((resolve, reject) => {

@@ -56,7 +56,6 @@ async function getFileFromDrive(token, fileName) {
   }
 
   const data = await response.json();
-  console.log(data);
 
   if (data.files && data.files.length > 0) {
     // Return the first matching file (or handle multiple matches as needed)

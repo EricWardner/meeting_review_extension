@@ -68,7 +68,7 @@ function createEditSurveyButton(surveyId) {
         </a>
       </div>
       <button class="VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ mN1ivc m2yD4b GjP4J RuPEwd HPut7d" mousedown:UX7yZ; mouseup:lbsD7e; mouseenter:tfO1Yc; mouseleave:JywGue; touchstart:p6p2H; touchmove:FwuNnf; touchend:yfqBxc; touchcancel:JMtRjd; focus:AHmuwe; blur:O22p3e; aria-label="Remove survey" id="xDeleteSurvey">
-        <div jsname="s3Eaab" class="VfPpkd-Bz112c-Jh9lGc"></div><div class="VfPpkd-Bz112c-J1Ukfc-LhBDec"></div>
+        <div class="VfPpkd-Bz112c-Jh9lGc"></div><div class="VfPpkd-Bz112c-J1Ukfc-LhBDec"></div>
         <i class="google-material-icons VfPpkd-kBDsod meh4fc hggPq" aria-hidden="true">close</i>
       </button>
     </div>
@@ -87,7 +87,13 @@ function addDeleteClickListener(surveyId, addSurveyDiv, responderUri) {
 
 function addClickEventListener(addSurveyDiv) {
   addSurveyDiv.addEventListener("click", async () => {
-    console.log("button clicked in content.js");
+    const thisDiv = document.getElementById("xAddFeedback").parentNode.parentNode;
+    console.log(thisDiv);
+    const loadingCircle = document.createElement("div");
+    loadingCircle.id = "new-form-progress";
+    loadingCircle.className = "Mciu2 bFNshf";
+    loadingCircle.innerHTML = loadingHtml;
+    thisDiv.appendChild(loadingCircle);
     const eventTitle = document.querySelector('input[aria-label="Title"]').value;
     const eventId = extractEventIdFromURL(window.location.href);
 
@@ -95,6 +101,7 @@ function addClickEventListener(addSurveyDiv) {
       const resp = await createSurvey(eventId, eventTitle);
       if (resp?.surveyId) {
         updateButtonToLink(addSurveyDiv, resp.surveyId, resp.responderUri);
+        thisDiv.removeChild(loadingCircle);
         addSurveyLinkToDescription(resp.responderUri);
       } else {
         console.error("Failed to create survey or receive surveyId.");
@@ -166,7 +173,7 @@ function updateButtonToLink(addSurveyDiv, surveyId, responderUri) {
         </a>
       </div>
       <button class="VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ mN1ivc m2yD4b GjP4J RuPEwd HPut7d" mousedown:UX7yZ; mouseup:lbsD7e; mouseenter:tfO1Yc; mouseleave:JywGue; touchstart:p6p2H; touchmove:FwuNnf; touchend:yfqBxc; touchcancel:JMtRjd; focus:AHmuwe; blur:O22p3e; aria-label="Remove survey" id="xDeleteSurvey">
-        <div jsname="s3Eaab" class="VfPpkd-Bz112c-Jh9lGc"></div><div class="VfPpkd-Bz112c-J1Ukfc-LhBDec"></div>
+        <div class="VfPpkd-Bz112c-Jh9lGc"></div><div class="VfPpkd-Bz112c-J1Ukfc-LhBDec"></div>
         <i class="google-material-icons VfPpkd-kBDsod meh4fc hggPq" aria-hidden="true">close</i>
       </button>
     </div>
@@ -202,3 +209,33 @@ function extractEventIdFromURL(url) {
   const match = url.match(/eventedit\/([^?&]+)/);
   return match ? match[1] : null;
 }
+
+const loadingHtml = `
+  <div class="WjSA4b">
+    <div class="y0NMy">
+      <div data-progressvalue="0" class="DU29of a9u1Hb B85vKf">
+        <div class="VfPpkd-JGcpL-Mr8B3-V67aGc"> </div>
+        <div role="progressbar" class="VfPpkd-JGcpL-P1ekSe VfPpkd-JGcpL-P1ekSe-OWXEXe-A9y3zc VfPpkd-JGcpL-P1ekSe-OWXEXe-DMahoc-hxXJme" aria-hidden="true" style="width: 20px; height: 20px;">
+          <div class="VfPpkd-JGcpL-uI4vCe-haAclf">
+            <svg class="VfPpkd-JGcpL-uI4vCe-LkdAo-Bd00G" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+              <circle class="VfPpkd-JGcpL-uI4vCe-u014N" cx="10" cy="10" r="7.5" stroke-width="2.3333333333333335"></circle>
+              <circle class="VfPpkd-JGcpL-uI4vCe-LkdAo" cx="10" cy="10" r="7.5" stroke-dasharray="47.123889" stroke-dashoffset="47.123889" stroke-width="2.3333333333333335"></circle>
+            </svg>
+          </div>
+          <div class="VfPpkd-JGcpL-IdXvz-haAclf">
+            <div class="VfPpkd-JGcpL-QYI5B-pbTTYe VfPpkd-JGcpL-Ydhldb-R6PoUb">
+              <div class="VfPpkd-JGcpL-lLvYUc-e9ayKc VfPpkd-JGcpL-lLvYUc-LK5yu">
+                <svg class="VfPpkd-JGcpL-IdXvz-LkdAo-Bd00G" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <circle cx="10" cy="10" r="7.5" stroke-dasharray="47.123889" stroke-dashoffset="23.5619445" stroke-width="2.3333333333333335"></circle>
+                </svg>
+              </div>
+              <div class="VfPpkd-JGcpL-OcUoKf-TpMipd">
+                <svg class="VfPpkd-JGcpL-IdXvz-LkdAo-Bd00G" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+`;

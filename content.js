@@ -44,7 +44,7 @@ function addClickEventListener(addSurveyDiv) {
     console.log("button clicked in content.js");
     const eventTitle = document.querySelector('input[aria-label="Title"]').value;
     const eventId = extractEventIdFromURL(window.location.href);
-    
+
     try {
       const resp = await createSurvey(eventId, eventTitle);
       if (resp?.surveyId) {
@@ -87,8 +87,35 @@ function updateButtonToLink(addSurveyDiv, surveyId) {
           <span class="l4V7wb Fxmcue"><span class="NPEfkd RveJvd snByac">Edit Feedback Survey</span></span>
         </a>
       </div>
+      <button class="VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ mN1ivc m2yD4b GjP4J RuPEwd HPut7d" mousedown:UX7yZ; mouseup:lbsD7e; mouseenter:tfO1Yc; mouseleave:JywGue; touchstart:p6p2H; touchmove:FwuNnf; touchend:yfqBxc; touchcancel:JMtRjd; focus:AHmuwe; blur:O22p3e; aria-label="Remove survey" id="xDeleteSurvey">
+        <div jsname="s3Eaab" class="VfPpkd-Bz112c-Jh9lGc"></div><div class="VfPpkd-Bz112c-J1Ukfc-LhBDec"></div>
+        <i class="google-material-icons VfPpkd-kBDsod meh4fc hggPq" aria-hidden="true">close</i>
+      </button>
     </div>
   `;
+
+  // Add event listener for the delete button
+  document.getElementById("xDeleteSurvey").addEventListener("click", (e) => {
+    e.stopPropagation(); // Prevent event from bubbling up
+    deleteSurvey(surveyId, addSurveyDiv);
+  });
+}
+
+function deleteSurvey(surveyId, addSurveyDiv) {
+  if (confirm("Are you sure you want to delete this survey?")) {
+    chrome.runtime.sendMessage({ action: "deleteSurvey", surveyId }, (response) => {
+      if (response.success) {
+        console.log("Survey deleted successfully");
+        // Reset the button to its original state
+        const newAddSurveyDiv = createAddSurveyButton();
+        addSurveyDiv.parentNode.replaceChild(newAddSurveyDiv, addSurveyDiv);
+        addClickEventListener(newAddSurveyDiv);
+      } else {
+        console.error("Failed to delete survey:", response.error);
+        alert("Failed to delete survey. Please try again.");
+      }
+    });
+  }
 }
 
 function extractEventIdFromURL(url) {

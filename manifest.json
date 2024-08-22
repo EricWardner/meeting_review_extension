@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Calendar Survey Tool",
+  "version": "1.0",
+  "oauth2": {
+    "client_id": "585748688541-2q572p30qujhlgb681gv12s8c41fjii9.apps.googleusercontent.com",
+    "scopes": [
+        "https://www.googleapis.com/auth/forms.body",
+        "https://www.googleapis.com/auth/calendar.events",
+        "https://www.googleapis.com/auth/userinfo.email"
+    ]
+  },
+  "permissions": [
+    "identity",
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://forms.googleapis.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://calendar.google.com/calendar/*/eventedit/*"],
+      "js": ["content.js"]
+    }
+  ]
+}

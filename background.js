@@ -1,40 +1,31 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "createSurvey") {
     console.log("createSurvey message received in background");
-    // Get the eventId and eventTitle from the message
-    const { eventId, eventTitle } = request;
-
-    // Ensure the user is authenticated
-    ensureAuthenticated()
-      .then((token) => {
-        // Use the Google Forms API to create a survey
-        createSurvey(token, eventTitle)
-          .then((surveyId) => {
-            console.log("Survey created with ID:", surveyId);
-            // You can send the survey ID back to the content script if needed
-            sendResponse({ success: true, surveyId });
-          })
-          .catch((error) => {
-            console.error("Error creating survey:", error);
-            sendResponse({ success: false, error });
-          });
-      })
-      .catch((authError) => {
-        console.error("Authentication failed:", authError);
-        sendResponse({ success: false, error: authError });
-      });
-
-    // Indicate that the response will be sent asynchronously
+    handleCreateSurvey(request)
+      .then(result => sendResponse(result))
+      .catch(error => sendResponse({ success: false, error: error.message }));
     return true;
   }
 });
 
+async function handleCreateSurvey(request) {
+  const { eventId, eventTitle } = request;
+  try {
+    const token = await ensureAuthenticated();
+    const surveyId = await createSurvey(token, eventTitle);
+    console.log("Survey created with ID:", surveyId);
+    return { success: true, surveyId };
+  } catch (error) {
+    console.error("Error:", error);
+    throw error;
+  }
+}
+
 function ensureAuthenticated() {
   return new Promise((resolve, reject) => {
-    // Check if the user is already authenticated
     chrome.identity.getAuthToken({ interactive: true }, function (token) {
       if (chrome.runtime.lastError || !token) {
-        reject(chrome.runtime.lastError);
+        reject(new Error(chrome.runtime.lastError?.message || "Authentication failed"));
       } else {
         console.log(token);
         resolve(token);
@@ -43,100 +34,78 @@ function ensureAuthenticated() {
   });
 }
 
-function createSurvey(token, eventTitle) {
-  return new Promise((resolve, reject) => {
-    const surveyTitle = `Quick Meeting Feedback`;
+async function createSurvey(token, eventTitle) {
+  const surveyTitle = "Quick Meeting Feedback";
+  const surveyPayload = {
+    info: {
+      title: surveyTitle,
+      documentTitle: surveyTitle,
+    },
+  };
 
-    // Payload to create the form
-    const surveyPayload = {
-      info: {
-        title: surveyTitle,
-        documentTitle: surveyTitle, 
-      },
-    };
+  const formData = await fetchWithAuth("https://forms.googleapis.com/v1/forms", {
+    method: "POST",
+    body: JSON.stringify(surveyPayload),
+  }, token);
 
-    // Step 1: Create the form
-    fetch("https://forms.googleapis.com/v1/forms", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(surveyPayload),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          return response.json().then(error => {
-            throw new Error(`Failed to create survey: ${error.error.message}`);
-          });
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log("Form created:", data);
-        if (data?.formId) {
-          const formId = data.formId;
+  if (!formData.formId) {
+    throw new Error("Failed to create survey: No formId returned");
+  }
 
-          // Step 2: Update the form with content
-          const surveyContent = {
-            requests: [
-              {
-                createItem: {
-                  item: {
-                    title: "Would you go to a meeting like that again?",
-                    questionItem: {
-                      question: {
-                        required: true,
-                        scaleQuestion: {
-                          low: 0,
-                          high: 2,
-                          lowLabel: "Not worth it",
-                          highLabel: "Absolutely",
-                        },
-                      },
-                    },
-                  },
-                  location: {
-                    index: 0,
-                  },
+  const surveyContent = {
+    requests: [
+      {
+        createItem: {
+          item: {
+            title: "Would you go to a meeting like that again?",
+            questionItem: {
+              question: {
+                required: true,
+                scaleQuestion: {
+                  low: 0,
+                  high: 2,
+                  lowLabel: "Not worth it",
+                  highLabel: "Absolutely",
                 },
               },
-              {
-                updateFormInfo: {
-                  info: {
-                    description: `Feedback survey for the "${eventTitle}" meeting`
-                  },
-                  updateMask:"description"
-                },
-              }
-            ],
-          };
-
-          fetch(`https://forms.googleapis.com/v1/forms/${formId}:batchUpdate`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
             },
-            body: JSON.stringify(surveyContent),
-          })
-            .then((response) => {
-              if (!response.ok) {
-                return response.json().then(error => {
-                  throw new Error(`Failed to update survey: ${error.error.message}`);
-                });
-              }
-              return response.json();
-            })
-            .then((updateData) => {
-              console.log("Form updated:", updateData);
-              resolve(formId);
-            })
-            .catch((error) => reject(error));
-        } else {
-          reject(new Error("Failed to create survey: No formId returned"));
-        }
-      })
-      .catch((error) => reject(error));
+          },
+          location: { index: 0 },
+        },
+      },
+      {
+        updateFormInfo: {
+          info: {
+            description: `Feedback survey for the "${eventTitle}" meeting`
+          },
+          updateMask: "description"
+        },
+      }
+    ],
+  };
+
+  await fetchWithAuth(`https://forms.googleapis.com/v1/forms/${formData.formId}:batchUpdate`, {
+    method: "POST",
+    body: JSON.stringify(surveyContent),
+  }, token);
+
+  return formData.formId;
+}
+
+async function fetchWithAuth(url, options, token) {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
   });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`API request failed: ${error.error.message}`);
+  }
+
+  return response.json();
 }

@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Calendar Survey Tool",
+  "name": "Quick Meeting Feedback",
   "version": "1.0",
   "oauth2": {
     "client_id": "585748688541-2q572p30qujhlgb681gv12s8c41fjii9.apps.googleusercontent.com",

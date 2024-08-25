@@ -13,8 +13,6 @@
   },
   "permissions": [
     "identity",
-    "storage",
-    "activeTab",
     "scripting"
   ],
   "host_permissions": [

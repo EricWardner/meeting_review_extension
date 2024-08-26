@@ -67,7 +67,7 @@ function createEditSurveyButton(surveyId: string) {
         </div>
       </i>
     </div>
-    <div class="j3nyw">
+    <div class="j3nyw" id="xAddSurveyBtn">
       <div class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe P62QJc LQeN7 UZLCCd xYvThe j9Fkxf">
         <a href="${surveyLink}" target="_blank" tabindex="0" id="xEditFeedbackLink">
           <span class="l4V7wb Fxmcue"><span class="NPEfkd RveJvd snByac">Edit Feedback Survey</span></span>

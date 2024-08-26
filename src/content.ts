@@ -13,7 +13,7 @@ const observer = new MutationObserver((mutations) => {
 observer.observe(document.body, { childList: true, subtree: true });
 
 function handleMutation(mutation: MutationRecord) {
-  if (!document.getElementById("xAddFeedbackBtn")) {
+  if (!document.getElementById("xAddSurveyBtn")) {
     const eventId = extractEventIdFromURL(window.location.href);
     chrome.runtime.sendMessage({ action: "checkIfSurveyExists", eventId }, (resp) => {
       const targetChild = mutation.target.firstChild?.nextSibling ?? null;
@@ -34,7 +34,7 @@ function handleMutation(mutation: MutationRecord) {
 function createAddSurveyButton() {
   const addSurveyDiv = document.createElement("div");
   addSurveyDiv.classList.add("FrSOzf");
-  addSurveyDiv.id = "xAddSurveyBtn";
+  addSurveyDiv.id = "xAddSurveyDiv";
   addSurveyDiv.innerHTML = `
     <div aria-hidden="true" class="tzcF6">
       <i class="google-material-icons meh4fc hggPq uSx8Od" aria-hidden="true">
@@ -45,7 +45,7 @@ function createAddSurveyButton() {
     </div>
     <div class="j3nyw">
       <div class="d27AIf z5I5rf v9VzKf">
-        <div class="uArJ5e UQuaGc Y5sE8d y4cid dvv0Pc M9Bg4d" role="button" tabindex="0" id="xAddFeedback">
+        <div class="uArJ5e UQuaGc Y5sE8d y4cid dvv0Pc M9Bg4d" role="button" tabindex="0" id="xAddSurveyBtn">
           <span class="l4V7wb Fxmcue"><span class="NPEfkd RveJvd snByac">Add Meeting Feedback Survey</span></span>
         </div>
       </div>

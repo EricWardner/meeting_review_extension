@@ -3,7 +3,7 @@ const observer = new MutationObserver((mutations) => {
     if (
       mutation.type === "childList" &&
       mutation.target instanceof HTMLElement &&
-      mutation.target.className === "ewPPR"
+      (mutation.target.className === "ewPPR" || mutation.target.className === "anMZof")
     ) {
       handleMutation(mutation);
     }
@@ -18,7 +18,7 @@ function handleMutation(mutation: MutationRecord) {
     chrome.runtime.sendMessage({ action: "checkIfSurveyExists", eventId }, (resp) => {
       const targetChild = mutation.target.firstChild?.nextSibling ?? null;
       if (resp.surveyId) {
-        console.log("Found existing survey for this event")
+        console.log("Found existing survey for this event");
         const editSurveyDiv = createEditSurveyButton(resp.surveyId);
         mutation.target.insertBefore(editSurveyDiv, targetChild);
         addDeleteClickListener(resp.surveyId, editSurveyDiv);

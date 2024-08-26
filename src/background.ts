@@ -22,7 +22,11 @@ async function handleCheckIfSurveyExists(eventId: string) {
   try {
     const token = await ensureAuthenticated();
     const surveyId = await getFileFromDrive(token, eventId);
-    return { success: true, surveyId };
+    if (surveyId !== undefined) {
+      return { success: true, surveyId };
+    } else {
+      return { success: false, surveyId };
+    }
   } catch (error) {
     console.error("Error searching for file:", error);
     throw error;
@@ -40,7 +44,7 @@ async function handleDeleteSurvey(surveyId: string) {
   }
 }
 
-async function getFileFromDrive(token: string, fileName: string) {
+async function getFileFromDrive(token: string, fileName: string): Promise<string | undefined> {
   const response = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${fileName}' and trashed=false`, {
     method: "GET",
     headers: {
@@ -61,7 +65,7 @@ async function getFileFromDrive(token: string, fileName: string) {
     // Return the first matching file (or handle multiple matches as needed)
     return data.files[0].id;
   } else {
-    throw new Error(`No file found with the name: ${fileName}`);
+    return undefined;
   }
 }
 

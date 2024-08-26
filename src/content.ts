@@ -13,11 +13,12 @@ const observer = new MutationObserver((mutations) => {
 observer.observe(document.body, { childList: true, subtree: true });
 
 function handleMutation(mutation: MutationRecord) {
-  if (!document.getElementById("add-feedback-survey-btn")) {
+  if (!document.getElementById("xAddFeedbackBtn")) {
     const eventId = extractEventIdFromURL(window.location.href);
     chrome.runtime.sendMessage({ action: "checkIfSurveyExists", eventId }, (resp) => {
       const targetChild = mutation.target.firstChild?.nextSibling ?? null;
       if (resp.surveyId) {
+        console.log("Found existing survey for this event")
         const editSurveyDiv = createEditSurveyButton(resp.surveyId);
         mutation.target.insertBefore(editSurveyDiv, targetChild);
         addDeleteClickListener(resp.surveyId, editSurveyDiv);
@@ -33,7 +34,7 @@ function handleMutation(mutation: MutationRecord) {
 function createAddSurveyButton() {
   const addSurveyDiv = document.createElement("div");
   addSurveyDiv.classList.add("FrSOzf");
-  addSurveyDiv.id = "add-feedback-survey-btn";
+  addSurveyDiv.id = "xAddSurveyBtn";
   addSurveyDiv.innerHTML = `
     <div aria-hidden="true" class="tzcF6">
       <i class="google-material-icons meh4fc hggPq uSx8Od" aria-hidden="true">
@@ -57,7 +58,7 @@ function createEditSurveyButton(surveyId: string) {
   const surveyLink = `https://docs.google.com/forms/d/${surveyId}/edit`;
   const editSurveyDiv = document.createElement("div");
   editSurveyDiv.classList.add("FrSOzf");
-  editSurveyDiv.id = "add-feedback-survey-btn";
+  editSurveyDiv.id = "xEditSurveyBtn";
   editSurveyDiv.innerHTML = `
     <div aria-hidden="true" class="tzcF6">
       <i class="google-material-icons meh4fc hggPq uSx8Od" aria-hidden="true">
@@ -68,7 +69,7 @@ function createEditSurveyButton(surveyId: string) {
     </div>
     <div class="j3nyw">
       <div class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe P62QJc LQeN7 UZLCCd xYvThe j9Fkxf">
-        <a href="${surveyLink}" target="_blank" tabindex="0" id="xEditFeedback">
+        <a href="${surveyLink}" target="_blank" tabindex="0" id="xEditFeedbackLink">
           <span class="l4V7wb Fxmcue"><span class="NPEfkd RveJvd snByac">Edit Feedback Survey</span></span>
         </a>
       </div>
@@ -96,9 +97,9 @@ function addDeleteClickListener(surveyId: string, addSurveyDiv: HTMLElement) {
 
 function addClickEventListener(addSurveyDiv: HTMLElement) {
   addSurveyDiv.addEventListener("click", async () => {
-    const deleteButton = document.getElementById("xDeleteSurvey");
+    const deleteButton = document.getElementById("xAddSurveyBtn");
     if (!deleteButton) {
-      console.error("Couldn't find xDeleteSurvey in DOM");
+      console.error("Couldn't find xAddSurveyBtn in DOM");
       return;
     }
 
@@ -209,7 +210,7 @@ function updateButtonToLink(addSurveyDiv: HTMLElement, surveyId: string, respond
     </div>
     <div class="j3nyw">
       <div class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe P62QJc LQeN7 UZLCCd xYvThe j9Fkxf">
-        <a href="${surveyLink}" target="_blank" tabindex="0" id="xEditFeedback">
+        <a href="${surveyLink}" target="_blank" tabindex="0" id="xEditFeedbackLink">
           <span class="l4V7wb Fxmcue"><span class="NPEfkd RveJvd snByac">Edit Feedback Survey</span></span>
         </a>
       </div>
